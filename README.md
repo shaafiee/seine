@@ -32,7 +32,8 @@ sourceData = [
 	}
 ]
 sync('someGoogleProject', sourceData, 'catalog', 'US')
-*\# The arguments above are sync(<Google project name>, <dict>, <main table name>, <BigQuery region>)*
+### The arguments above are:
+### sync(<Google project name>, <dict>, <main table name>, <BigQuery region>)*
 ```
 
 The above example will generate the following tables in BigQuery:
