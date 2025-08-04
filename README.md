@@ -1,10 +1,10 @@
-# Seine
+# BQSeine
 ## Python dict to BigQuery data loader
 Seine is a data loader that pushes data in a dictionary to BigQuery in relational normalized form.
 
 ## Usage
 ```
-from seine import sync
+from bqseine.polyp import sync
 sourceData = [
 	{
 		'item': 'Juice',
