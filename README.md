@@ -1,8 +1,18 @@
 # BQSeine
 ## Python dict to BigQuery data loader
-Seine is a data loader that pushes data in a dictionary to BigQuery in relational normalized form.
+Seine is a data loader that pushes data in a dictionary to BigQuery in relational normalized form. Seine also has functionality to use Gemini to get data insights from Bigquery.
 
 ## Usage
+
+### AI insights
+```
+from bqseine.agent import chat
+response = chat(question, context)
+```
+
+In making the  call to chat(<question>, <context>), the <context> argument explains to the LLM how the tables in Bigquery and their fields refer to each other and what they mean.
+
+### Data loading
 ```
 from bqseine.polyp import sync
 sourceData = [
@@ -37,13 +47,13 @@ sync('someGoogleProject', sourceData, 'catalog', 'US')
 ```
 
 The above example will generate the following tables in BigQuery:
-### catalog
+#### catalog
 | seine_id | seine_parent_id | item | price | injected |
 | --- | --- | --- | --- | --- |
 | 1 | 0 | 'Juice' | 20.0 | now() |
 | 2 | 0 | 'Burger' | 30.0 | now() |
 
-### catalog_stock
+#### catalog_stock
 | seine_id | seine_parent_id | batch | qty | injected |
 | --- | --- | --- | --- | --- |
 | 1 | 1 | '2025-01-20' | 300 | now() |
