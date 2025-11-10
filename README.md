@@ -1,5 +1,5 @@
 # BQSeine
-## Python dict to BigQuery data loader
+## Bigquery AI agent and data loader
 Seine is a data loader that pushes data in a dictionary to BigQuery in relational normalized form. Seine also has functionality to use Gemini to get data insights from Bigquery.
 
 ## Usage
@@ -10,7 +10,7 @@ from bqseine.agent import chat
 response = chat(question, context)
 ```
 
-In making the  call to chat(<question>, <context>), the <context> argument explains to the LLM how the tables in Bigquery and their fields refer to each other and what they mean.
+In making the  call to chat(*question*, *context*), the *context* argument explains to the LLM how the tables in Bigquery and their fields refer to each other and what they mean.
 
 To run, you will need the following environment variables:
 - GOOGLE_API_KEY, storing your Google AI Studio API key
