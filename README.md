@@ -12,6 +12,11 @@ response = chat(question, context)
 
 In making the  call to chat(<question>, <context>), the <context> argument explains to the LLM how the tables in Bigquery and their fields refer to each other and what they mean.
 
+To run, you will need the following environment variables:
+- GOOGLE_API_KEY, storing your Google AI Studio API key
+- GOOGLE_CLOUD_PROJECT, storing your Google Cloud Project name
+- GOOGLE_APPLICATION_CREDENTIALS, that points to a credential with which you can access Bigquery
+
 ### Data loading
 ```
 from bqseine.polyp import sync
