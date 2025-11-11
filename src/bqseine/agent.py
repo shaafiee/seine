@@ -206,6 +206,7 @@ def chat(user_data: list[str],
 	if history is None:
 		history = []
 
+	"""
 	if not history:
 		history.append(
 			gtypes.Content(
@@ -213,12 +214,21 @@ def chat(user_data: list[str],
 				parts=[gtypes.Part(text=f"{SYSTEM_PROMPT}\n{additional_instructions}")]
 			)
 		)
+	"""
 
 	# Add the new user message
 	history.append(
 		gtypes.Content(
 			role="user",
 			parts=[gtypes.Part(text=user_prompt)]
+		)
+	)
+
+	history.insert(
+		0,
+		gtypes.Content(
+			role="user",
+			parts=[gtypes.Part(text=f"{SYSTEM_PROMPT}\n{additional_instructions}")]
 		)
 	)
 
