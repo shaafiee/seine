@@ -7,10 +7,11 @@ Seine is a data loader that pushes data in a dictionary to BigQuery in relationa
 ### AI insights
 ```
 from bqseine.agent import chat
-response = chat(question, context)
+response = chat([question, context])
 ```
 
-In making the call to chat(*question*, *context*, *temperature*, *mode*, *model*), where:
+In making the call to chat(\[*question*, *context*\], *history*, *temperature*, *mode*, *model*), where:
+- *history* of type list\[gtypes.Content\] (gtypes from google.genai)
 - *context* argument explains to the LLM how the tables in Bigquery and their fields refer to each other and what they mean
 - *temperature* (set by default to 0.4) is how creative the model is allowed to get with 2 being max
 - *mode* (set by default to "AUTO") is the tool mode
