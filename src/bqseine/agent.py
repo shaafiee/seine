@@ -162,20 +162,13 @@ bq_tools = gtypes.Tool(function_declarations=[
 	},
 ])
 
-# Optional: force the model to use tools when needed (or try AUTO first).
-tool_config_any = gtypes.ToolConfig(
-	function_calling_config=gtypes.FunctionCallingConfig(mode="AUTO")
-)
-gen_config = gtypes.GenerateContentConfig(
-	tools=[bq_tools],
-	tool_config=tool_config_any,
-	temperature=0.1,
-)
+
 
 SYSTEM_PROMPT = """You are a data analyst assistant for BigQuery.
 - Prefer SELECT-only SQL.
 - When missing a column/table name, use list_datasets/list_tables/get_table_schema.
 - For final answers, provide a brief natural-language summary, include the SQL you ran in a fenced code block, and include the output from the SQL, styled as an HTML <table>, in a fenced code block.
+- The rest of what follows in this prompt are the data schema and hints on how to build the SQL queries for your data analysis.
 """
 def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 	try:
@@ -192,8 +185,22 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 		return {"error": str(e)}
 
 def chat(user_data: list[str],
-			  history: list[gtypes.Content] | None = None,
-			  model: str = "gemini-2.5-pro") -> gtypes.GenerateContentResponse:
+			history: list[gtypes.Content] | None = None,
+			modelTemperature = 0.4,
+			modelMode = "AUTO",
+			model: str = "gemini-2.5-pro") -> gtypes.GenerateContentResponse:
+
+	# Optional: force the model to use tools when needed (or try AUTO first).
+	tool_config_any = gtypes.ToolConfig(
+		function_calling_config=gtypes.FunctionCallingConfig(mode="AUTO")
+	)
+
+	gen_config = gtypes.GenerateContentConfig(
+		tools=[bq_tools],
+		tool_config=tool_config_any,
+		temperature=modelTemperature,
+	)
+
 	user_prompt = user_data[0]
 	additional_instructions = user_data[1]
 	if history is None:
@@ -262,20 +269,3 @@ def chat(user_data: list[str],
 	)
 
 	return final_resp
-
-if __name__ == "__main__":
-	#"Generate a table of all the fabrics for which a slipcover was sold in October of 2025, with first column showing the fabric name, second the volume sold and third the total earnings in USD."
-	#"Generate weekly STOCR 28 the second quarter of 2025."
-	# Example usage
-	"""
-	question = (
-		"Find the top 5 product categories by revenue in 2025 Q3 from "
-		"`myproj.analytics.sales` and show revenue and order_count. "
-		"If you don't know columns, inspect the schema first."
-	)
-	"""
-	question = (
-		"Generate a table of all the fabrics for which a slipcover was sold in October of 2025, with first column showing the fabric name, second the volume sold and third the total earnings in USD."
-	)
-	answer = chat_once([question, f"{sales}\n{stocr}\n{traffic}"])
-	print(answer.text)

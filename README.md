@@ -10,7 +10,11 @@ from bqseine.agent import chat
 response = chat(question, context)
 ```
 
-In making the  call to chat(*question*, *context*), the *context* argument explains to the LLM how the tables in Bigquery and their fields refer to each other and what they mean.
+In making the call to chat(*question*, *context*, *temperature*, *mode*, *model*), where:
+- *context* argument explains to the LLM how the tables in Bigquery and their fields refer to each other and what they mean
+- *temperature* (set by default to 0.4) is how creative the model is allowed to get with 2 being max
+- *mode* (set by default to "AUTO") is the tool mode
+- *model* (set by default to "gemini-2.5-pro") is the AI model to be used
 
 To run, you will need the following environment variables:
 - GOOGLE_API_KEY, storing your Google AI Studio API key
