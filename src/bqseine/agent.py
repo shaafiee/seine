@@ -201,7 +201,7 @@ def chat(user_data: list[str],
 		tools=[bq_tools],
 		tool_config=tool_config_any,
 		temperature=modelTemperature,
-		thinking_config=types.ThinkingConfig(thinking_budget=thinking) # Disables thinking
+		thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) # Disables thinking
 	)
 
 	user_prompt = user_data[0]
