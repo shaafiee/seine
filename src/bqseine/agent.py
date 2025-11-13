@@ -287,7 +287,7 @@ def chat(user_data: list[str],
 	gen_config = gtypes.GenerateContentConfig(
 		tools=[bq_functions_tool, chart_tool],
 		tool_config=tool_config_any,
-		temperature=modelTemperature
+		temperature=modelTemperature,
 		thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
 	)
 
