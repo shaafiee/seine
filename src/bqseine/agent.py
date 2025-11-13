@@ -368,6 +368,8 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 		if name == "render_complex_chart":
 			return json_safe(render_complex_chart(**args))
 		return {"error": f"Unknown tool: {name}"}
+	except Exception as e:
+		return {"error": str(e)}
 	"""
 	try:
 		returned = {}
@@ -385,8 +387,7 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 			return {"error": f"Unknown tool: {name}"}
 		return sanitize_for_json(returned)
 	"""
-	except Exception as e:
-		return {"error": str(e)}
+
 
 def chat(user_data: list[str],
 			history: list[gtypes.Content] | None = None,
