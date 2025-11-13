@@ -115,8 +115,7 @@ code_exec_tool = gtypes.Tool(
     code_execution=gtypes.ToolCodeExecution()
 )
 
-# 2. Define the BigQuery Function Tool using proper types
-bq_functions_tool = gtypes.Tool(
+bq_tool = gtypes.Tool(
     function_declarations=[
         gtypes.FunctionDeclaration(
             name="list_datasets",
@@ -168,12 +167,7 @@ bq_functions_tool = gtypes.Tool(
                 },
                 required=["sql"],
             ),
-        )
-    ]
-)
-
-chart_tool = gtypes.Tool(
-    function_declarations=[
+        ),
         gtypes.FunctionDeclaration(
             name="render_complex_chart",
             description="Generates advanced visualizations including maps, heatmaps, and comparative graphs.",
@@ -251,6 +245,7 @@ chart_tool = gtypes.Tool(
     ]
 )
 
+
 SYSTEM_PROMPT = """You are a data analyst assistant for BigQuery.
 - Prefer SELECT-only SQL.
 - When missing a column/table name, use list_datasets/list_tables/get_table_schema.
@@ -285,7 +280,7 @@ def chat(user_data: list[str],
 	)
 
 	gen_config = gtypes.GenerateContentConfig(
-		tools=[bq_functions_tool, chart_tool],
+		tools=[bq_tool],
 		tool_config=tool_config_any,
 		temperature=modelTemperature,
 		thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
