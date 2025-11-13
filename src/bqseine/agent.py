@@ -371,6 +371,7 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 		return {"error": f"Unknown tool: {name}"}
 	"""
 	try:
+		returned = {}
 		if name == "list_datasets":
 			returned = {"datasets": list_datasets(**args)}
 		elif name == "list_tables":
@@ -380,10 +381,10 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 		elif name == "run_query":
 			returned = run_query(**args)
 		elif name == "render_complex_chart":
-			return render_complex_chart(**args)
+			returned = render_complex_chart(**args)
 		else:
 			return {"error": f"Unknown tool: {name}"}
-		return sanitize_for_json(result)
+		return sanitize_for_json(returned)
 	except Exception as e:
 		return {"error": str(e)}
 
