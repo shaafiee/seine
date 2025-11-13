@@ -328,9 +328,6 @@ def sanitize_for_json(obj):
 		return {k: sanitize_for_json(v) for k, v in obj.items()}
 	return obj
 
-                            "bar", "line", "scatter", # Basic
-                            "heatmap",                       # Matrix
-                            "spatial_map",                   # Geo
 SYSTEM_PROMPT = """You are a data analyst assistant for BigQuery.
 - Prefer SELECT-only SQL.
 - When missing a column/table name, use list_datasets/list_tables/get_table_schema.
