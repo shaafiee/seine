@@ -381,11 +381,11 @@ def chat(user_data: list[str],
 			thinking = 1024) -> gtypes.GenerateContentResponse:
 
 	safety_settings = [
-		types.SafetySetting(
+		gtypes.SafetySetting(
 		    category="HARM_CATEGORY_DANGEROUS_CONTENT",
 		    threshold="BLOCK_NONE"
 		),
-		types.SafetySetting(
+		gtypes.SafetySetting(
 		    category="HARM_CATEGORY_HARASSMENT",
 		    threshold="BLOCK_NONE"
 		),
