@@ -90,30 +90,30 @@ def run_query(sql: str, params: Optional[Dict[str, Any]] = None, dry_run: bool =
 		job = bq.query(sql, job_config=job_config)
 
 		if dry_run:
-			return json_safe({
+			return {
 				"rows": [],
 				"total_rows": 0,
 				"slot_ms": job.slot_millis,
 				"job_id": job.job_id,
 				"cache_hit": getattr(job, "cache_hit", None),
 				"sql": sql,
-			})
+			}
 
 		raw_rows = [dict(r) for r in job.result()]
-		return json_safe({
+		return {
 			"rows": raw_rows,
 			"total_rows": len(raw_rows),
 			"slot_ms": job.slot_millis,
 			"job_id": job.job_id,
 			"cache_hit": getattr(job, "cache_hit", None),
 			"sql": sql,
-		})
+		}
 
 	except Exception as e:
-		return json_safe({
+		return {
 			"error": str(e),
 			"sql": sql,
-		})
+		}
 
 def render_complex_chart(chart_type, title, x_labels=None, datasets=None, z_matrix=None, geo_data=None, icon_config=None):
 	"""
@@ -344,6 +344,7 @@ SYSTEM_PROMPT = """You are a data analyst assistant for BigQuery.
 - The rest of what follows in this prompt are the data schema and hints on how to build the SQL queries for your data analysis.
 """
 def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+	"""
 	try:
 		if name == "list_datasets":
 			return json_safe({"datasets": list_datasets(**args)})
@@ -355,6 +356,19 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 			return json_safe(run_query(**args))
 		if name == "render_complex_chart":
 			return json_safe(render_complex_chart(**args))
+		return {"error": f"Unknown tool: {name}"}
+	"""
+	try:
+		if name == "list_datasets":
+			return {"datasets": list_datasets(**args)}
+		if name == "list_tables":
+			return {"tables": list_tables(**args)}
+		if name == "get_table_schema":
+			return {"schema": get_table_schema(**args)}
+		if name == "run_query":
+			return run_query(**args)
+		if name == "render_complex_chart":
+			return render_complex_chart(**args)
 		return {"error": f"Unknown tool: {name}"}
 	except Exception as e:
 		return {"error": str(e)}
@@ -438,6 +452,7 @@ def chat(user_data: list[str],
 						function_response=gtypes.FunctionResponse(
 							name=fc.name,
 							response=result,
+							id=fc.id
 						)
 					)
 				],
