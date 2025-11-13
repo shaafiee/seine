@@ -356,7 +356,6 @@ SYSTEM_PROMPT = """You are a data analyst assistant for BigQuery.
 - The rest of what follows in this prompt are the data schema and hints on how to build the SQL queries for your data analysis.
 """
 def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
-	"""
 	try:
 		if name == "list_datasets":
 			return json_safe({"datasets": list_datasets(**args)})
@@ -385,6 +384,7 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 		else:
 			return {"error": f"Unknown tool: {name}"}
 		return sanitize_for_json(returned)
+	"""
 	except Exception as e:
 		return {"error": str(e)}
 
