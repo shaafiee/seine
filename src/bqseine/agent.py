@@ -441,7 +441,6 @@ def chat(user_data: list[str],
 		)
 	)
 
-	"""
 	history.insert(
 		0,
 		gtypes.Content(
@@ -449,14 +448,12 @@ def chat(user_data: list[str],
 			parts=[gtypes.Part(text=f"{SYSTEM_PROMPT}\n{additional_instructions}")]
 		)
 	)
-	"""
 
 	# First call: model may respond with text + function_call parts
 	resp = gclient.models.generate_content(
 		model=model,
 		contents=history,
-		config=gen_config,
-		system_instruction=f"{SYSTEM_PROMPT}\n{additional_instructions}"
+		config=gen_config
 	)
 
 	# Collect any tool calls from parts
