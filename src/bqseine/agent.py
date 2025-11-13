@@ -285,10 +285,10 @@ def chat(user_data: list[str],
 	)
 
 	gen_config = gtypes.GenerateContentConfig(
-		tools=[bq_functions_tool, code_exec_tool, chart_tool],
+		tools=[bq_functions_tool, chart_tool],
 		tool_config=tool_config_any,
 		temperature=modelTemperature
-		#thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
+		thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
 	)
 
 	user_prompt = user_data[0]
