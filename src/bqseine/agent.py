@@ -119,8 +119,8 @@ def render_complex_chart(chart_type, title, x_labels=None, datasets=None, z_matr
 	"""
 	Generates a chart based on the 'Super-Schema' and returns a Base64 image string.
 	"""
-	plt.figure(figsize=(10, 6))
-	plt.title(title, fontsize=16, pad=20)
+	plt.figure(figsize=(7, 5))
+	plt.title(title, fontsize=12, pad=20)
 	
 	# --- 1. Basic Charts (Bar, Line, Scatter) ---
 	if chart_type in ["bar", "line", "scatter"]:
