@@ -166,24 +166,6 @@ def render_complex_chart(chart_type, title, x_labels=None, datasets=None, z_matr
 			if i < len(lats) and i < len(lons):
 				plt.annotate(name, (lons[i], lats[i]), xytext=(5, 5), textcoords='offset points')
 
-	# --- 4. Pictographs (Simplified) ---
-	elif chart_type == "pictograph" and icon_config:
-		# A simplified "Waffle Chart" style pictograph
-		# This draws a grid of dots to represent counts
-		count = int(datasets[0]['data'][0]) if datasets else 10
-		rows = 5
-		cols = (count // rows) + 1
-		x_dots = []
-		y_dots = []
-		
-		for i in range(count):
-			x_dots.append(i % cols)
-			y_dots.append(i // cols)
-			
-		plt.scatter(x_dots, y_dots, s=500, marker='o', c='purple') # 'o' acts as a generic icon
-		plt.axis('off')
-		plt.title(f"{title} (1 Dot = {icon_config.get('items_per_icon', 1)} units)")
-
 	# --- Output Handling ---
 	plt.tight_layout()
 	
@@ -268,11 +250,9 @@ bq_tool = gtypes.Tool(
                     "chart_type": gtypes.Schema(
                         type=gtypes.Type.STRING,
                         enum=[
-                            "bar", "line", "pie", "scatter", # Basic
+                            "bar", "line", "scatter", # Basic
                             "heatmap",                       # Matrix
-                            "pictograph",                    # Icon-based
                             "spatial_map",                   # Geo
-                            "grouped_bar", "stacked_area"    # Comparative
                         ],
                         description="The specific type of visualization to render."
                     ),
@@ -348,11 +328,14 @@ def sanitize_for_json(obj):
 		return {k: sanitize_for_json(v) for k, v in obj.items()}
 	return obj
 
+                            "bar", "line", "scatter", # Basic
+                            "heatmap",                       # Matrix
+                            "spatial_map",                   # Geo
 SYSTEM_PROMPT = """You are a data analyst assistant for BigQuery.
 - Prefer SELECT-only SQL.
 - When missing a column/table name, use list_datasets/list_tables/get_table_schema.
 - For final answer, provide a brief natural-language summary, include the SQL you ran in a fenced code block, and include the output from the SQL, styled as an HTML <table> in a fenced code block.
-- If the user asks for a chart illustrating the data, use render_complex_chart to get BASE64 of an image and add that to end of the final answer as a fenced PNG code block.
+- If the user asks, use render_complex_chart to get BASE64 of a chart and add that to end of the final answer as a fenced PNG code block.
 - The rest of what follows in this prompt are the data schema and hints on how to build the SQL queries for your data analysis.
 """
 def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
@@ -366,7 +349,7 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 		if name == "run_query":
 			return json_safe(run_query(**args))
 		if name == "render_complex_chart":
-			return {'image': render_complex_chart(**args)}
+			return {'chart': render_complex_chart(**args)}
 		return {"error": f"Unknown tool: {name}"}
 	except Exception as e:
 		return {"error": str(e)}
