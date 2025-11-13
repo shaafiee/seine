@@ -260,7 +260,7 @@ bq_tool = gtypes.Tool(
         ),
         gtypes.FunctionDeclaration(
             name="render_complex_chart",
-            description="Generates advanced visualizations including maps, heatmaps, and comparative graphs.",
+            description="Generates a visual chart image based on the provided plotting script. Use this to visualize data.",
             parameters=gtypes.Schema(
                 type=gtypes.Type.OBJECT,
                 properties={
@@ -380,6 +380,17 @@ def chat(user_data: list[str],
 			model: str = "gemini-2.5-pro",
 			thinking = 1024) -> gtypes.GenerateContentResponse:
 
+	safety_settings = [
+		types.SafetySetting(
+		    category="HARM_CATEGORY_DANGEROUS_CONTENT",
+		    threshold="BLOCK_NONE"
+		),
+		types.SafetySetting(
+		    category="HARM_CATEGORY_HARASSMENT",
+		    threshold="BLOCK_NONE"
+		),
+	]
+
 	# Optional: force the model to use tools when needed (or try AUTO first).
 	tool_config_any = gtypes.ToolConfig(
 		function_calling_config=gtypes.FunctionCallingConfig(mode="AUTO")
@@ -388,6 +399,7 @@ def chat(user_data: list[str],
 	gen_config = gtypes.GenerateContentConfig(
 		tools=[bq_tool],
 		tool_config=tool_config_any,
+		safety_settings=safety_settings,
 		temperature=modelTemperature,
 		thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
 	)
