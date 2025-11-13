@@ -111,64 +111,151 @@ def run_query(sql: str, params: Optional[Dict[str, Any]] = None, dry_run: bool =
 
 # ---------- Tool declarations for Gemini ----------
 
-bq_tools = gtypes.Tool(function_declarations=[
-	{
-		"name": "list_datasets",
-		"description": "List accessible BigQuery datasets for a project.",
-		"parameters": {
-			"type": "object",
-			"properties": {
-	"project_id": {"type": "string", "description": "GCP project ID"},
-			}
-		},
-	},
-	{
-		"name": "list_tables",
-		"description": "List tables in a dataset.",
-		"parameters": {
-			"type": "object",
-			"properties": {
-	"dataset": {"type": "string"},
-	"project_id": {"type": "string"},
-			},
-			"required": ["dataset"]
-		},
-	},
-	{
-		"name": "get_table_schema",
-		"description": "Get schema for a table as JSON.",
-		"parameters": {
-			"type": "object",
-			"properties": {
-	"table": {"type": "string"},
-	"dataset": {"type": "string"},
-	"project_id": {"type": "string"},
-			},
-			"required": ["table", "dataset"]
-		},
-	},
-	{
-		"name": "run_query",
-		"description": "Run a SELECT-only BigQuery query with optional named parameters.",
-		"parameters": {
-			"type": "object",
-			"properties": {
-	"sql": {"type": "string"},
-	"params": {"type": "object"},
-	"dry_run": {"type": "boolean"}
-			},
-			"required": ["sql"]
-		},
-	},
-])
+code_exec_tool = types.Tool(
+    code_execution=types.ToolCodeExecution()
+)
 
+# 2. Define the BigQuery Function Tool using proper types
+bq_functions_tool = gtypes.Tool(
+    function_declarations=[
+        gtypes.FunctionDeclaration(
+            name="list_datasets",
+            description="List accessible BigQuery datasets for a project.",
+            parameters=gtypes.Schema(
+                type=gtypes.Type.OBJECT,
+                properties={
+                    "project_id": gtypes.Schema(
+                        type=gtypes.Type.STRING, 
+                        description="GCP project ID"
+                    ),
+                },
+            ),
+        ),
+        gtypes.FunctionDeclaration(
+            name="list_tables",
+            description="List tables in a dataset.",
+            parameters=gtypes.Schema(
+                type=gtypes.Type.OBJECT,
+                properties={
+                    "dataset": gtypes.Schema(type=gtypes.Type.STRING),
+                    "project_id": gtypes.Schema(type=gtypes.Type.STRING),
+                },
+                required=["dataset"],
+            ),
+        ),
+        gtypes.FunctionDeclaration(
+            name="get_table_schema",
+            description="Get schema for a table as JSON.",
+            parameters=gtypes.Schema(
+                type=gtypes.Type.OBJECT,
+                properties={
+                    "table": gtypes.Schema(type=gtypes.Type.STRING),
+                    "dataset": gtypes.Schema(type=gtypes.Type.STRING),
+                    "project_id": gtypes.Schema(type=gtypes.Type.STRING),
+                },
+                required=["table", "dataset"],
+            ),
+        ),
+        gtypes.FunctionDeclaration(
+            name="run_query",
+            description="Run a SELECT-only BigQuery query with optional named parameters.",
+            parameters=gtypes.Schema(
+                type=gtypes.Type.OBJECT,
+                properties={
+                    "sql": gtypes.Schema(type=gtypes.Type.STRING),
+                    "params": gtypes.Schema(type=gtypes.Type.OBJECT),
+                    "dry_run": gtypes.Schema(type=gtypes.Type.BOOLEAN),
+                },
+                required=["sql"],
+            ),
+        )
+    ]
+)
 
+chart_tool = gtypes.Tool(
+    function_declarations=[
+        gtypes.FunctionDeclaration(
+            name="render_complex_chart",
+            description="Generates advanced visualizations including maps, heatmaps, and comparative graphs.",
+            parameters=gtypes.Schema(
+                type=gtypes.Type.OBJECT,
+                properties={
+                    # 1. The Expanded Enum
+                    "chart_type": gtypes.Schema(
+                        type=gtypes.Type.STRING,
+                        enum=[
+                            "bar", "line", "pie", "scatter", # Basic
+                            "heatmap",                       # Matrix
+                            "pictograph",                    # Icon-based
+                            "spatial_map",                   # Geo
+                            "grouped_bar", "stacked_area"    # Comparative
+                        ],
+                        description="The specific type of visualization to render."
+                    ),
+                    "title": gtypes.Schema(type=gtypes.Type.STRING),
+                    
+                    # 2. Standard Data (Simple X/Y)
+                    "x_labels": gtypes.Schema(
+                        type=gtypes.Type.ARRAY,
+                        items=gtypes.Schema(type=gtypes.Type.STRING),
+                        description="Labels for the X axis or Categories."
+                    ),
+                    
+                    # 3. Comparative / Multi-Series Data
+                    # We use a list of objects for multiple datasets (e.g., '2023 Sales', '2024 Sales')
+                    "datasets": gtypes.Schema(
+                        type=gtypes.Type.ARRAY,
+                        description="List of data series for comparative graphs.",
+                        items=gtypes.Schema(
+                            type=gtypes.Type.OBJECT,
+                            properties={
+                                "label": gtypes.Schema(type=gtypes.Type.STRING, description="Name of the series (e.g., 'Revenue')"),
+                                "data": gtypes.Schema(type=gtypes.Type.ARRAY, items=gtypes.Schema(type=gtypes.Type.NUMBER)),
+                                "color": gtypes.Schema(type=gtypes.Type.STRING, description="Optional hex color.")
+                            }
+                        )
+                    ),
+
+                    # 4. Heatmap Specifics (The Z-Matrix)
+                    "z_matrix": gtypes.Schema(
+                        type=gtypes.Type.ARRAY,
+                        description="2D array of numbers for heatmaps.",
+                        items=gtypes.Schema(
+                            type=gtypes.Type.ARRAY,
+                            items=gtypes.Schema(type=gtypes.Type.NUMBER)
+                        )
+                    ),
+
+                    # 5. Spatial/Map Specifics
+                    "geo_data": gtypes.Schema(
+                        type=gtypes.Type.OBJECT,
+                        properties={
+                            "latitudes": gtypes.Schema(type=gtypes.Type.ARRAY, items=gtypes.Schema(type=gtypes.Type.NUMBER)),
+                            "longitudes": gtypes.Schema(type=gtypes.Type.ARRAY, items=gtypes.Schema(type=gtypes.Type.NUMBER)),
+                            "location_names": gtypes.Schema(type=gtypes.Type.ARRAY, items=gtypes.Schema(type=gtypes.Type.STRING), description="Country or City names for Choropleths"),
+                        }
+                    ),
+
+                    # 6. Pictograph Specifics
+                    "icon_config": gtypes.Schema(
+                        type=gtypes.Type.OBJECT,
+                        properties={
+                            "icon_name": gtypes.Schema(type=gtypes.Type.STRING, description="e.g., 'person', 'car', 'house'"),
+                            "items_per_icon": gtypes.Schema(type=gtypes.Type.NUMBER, description="Scale, e.g., 1 icon = 100 units")
+                        }
+                    )
+                },
+                required=["chart_type", "title"]
+            )
+        )
+    ]
+)
 
 SYSTEM_PROMPT = """You are a data analyst assistant for BigQuery.
 - Prefer SELECT-only SQL.
 - When missing a column/table name, use list_datasets/list_tables/get_table_schema.
 - For final answers, provide a brief natural-language summary, include the SQL you ran in a fenced code block, and include the output from the SQL, styled as an HTML <table>, in a fenced code block.
-- If the user asks for an illustration such as a graph, infographic or pictogram, then generate it in JPEG format and add it to the end of the answer in BASE64 format as a fenced JPEG code block. Spend no more than 45 seconds to do this and if it takes longer then skip this request.
+- If the user asks for a chart illustrating the data, then generate it in JPEG format and add it to the end of the answer in BASE64 format as a fenced JPEG code block. Spend no more than 45 seconds to do this and if it takes longer then skip this request.
 - The rest of what follows in this prompt are the data schema and hints on how to build the SQL queries for your data analysis.
 """
 def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
@@ -198,7 +285,7 @@ def chat(user_data: list[str],
 	)
 
 	gen_config = gtypes.GenerateContentConfig(
-		tools=[bq_tools],
+		tools=[bq_functions_tool, code_exec_tool, chart_tool],
 		tool_config=tool_config_any,
 		temperature=modelTemperature,
 		thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) # Disables thinking
