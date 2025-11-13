@@ -8,10 +8,16 @@ from google import genai
 from google.genai import types as gtypes
 from google.cloud import bigquery
 
-from context import sales, stocr, traffic
+#from context import sales, stocr, traffic
 
 from decimal import Decimal
 from datetime import date, datetime
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import io
+import base64
+import numpy as np
 
 # --- BigQuery setup (ADC: env, WI, or SA on the host) ---
 bq = bigquery.Client()
@@ -108,6 +114,90 @@ def run_query(sql: str, params: Optional[Dict[str, Any]] = None, dry_run: bool =
 			"error": str(e),
 			"sql": sql,
 		})
+
+def render_complex_chart(chart_type, title, x_labels=None, datasets=None, z_matrix=None, geo_data=None, icon_config=None):
+	"""
+	Generates a chart based on the 'Super-Schema' and returns a Base64 image string.
+	"""
+	plt.figure(figsize=(10, 6))
+	plt.title(title, fontsize=16, pad=20)
+	
+	# --- 1. Basic Charts (Bar, Line, Scatter) ---
+	if chart_type in ["bar", "line", "scatter"]:
+		# Check if we have comparative datasets or simple x/y
+		if datasets:
+			for series in datasets:
+				label = series.get("label", "Data")
+				color = series.get("color", None)
+				data = series.get("data", [])
+				
+				if chart_type == "bar":
+					# Simple logic for grouped bars would go here; this is a stacked/overlap simplification
+					plt.bar(x_labels, data, label=label, alpha=0.7, color=color)
+				elif chart_type == "line":
+					plt.plot(x_labels, data, label=label, marker='o', color=color)
+				elif chart_type == "scatter":
+					plt.scatter(x_labels, data, label=label, color=color)
+			plt.legend()
+		
+	# --- 2. Heatmaps (Matrix Data) ---
+	elif chart_type == "heatmap" and z_matrix:
+		# Convert list-of-lists to DataFrame for easier labeling
+		df_matrix = pd.DataFrame(z_matrix)
+		if x_labels:
+			df_matrix.columns = x_labels[:len(df_matrix.columns)]
+		
+		sns.heatmap(df_matrix, annot=True, cmap="coolwarm", fmt=".1f")
+
+	# --- 3. Spatial Maps (Geo Data) ---
+	elif chart_type == "spatial_map" and geo_data:
+		# NOTE: In a restricted sandbox without GeoPandas, we plot Lat/Lon as a Scatter Plot.
+		lats = geo_data.get("latitudes", [])
+		lons = geo_data.get("longitudes", [])
+		names = geo_data.get("location_names", [])
+		
+		plt.scatter(lons, lats, c='red', marker='x', s=100)
+		plt.xlabel("Longitude")
+		plt.ylabel("Latitude")
+		plt.grid(True, linestyle="--", alpha=0.5)
+		
+		# Annotate points
+		for i, name in enumerate(names):
+			if i < len(lats) and i < len(lons):
+				plt.annotate(name, (lons[i], lats[i]), xytext=(5, 5), textcoords='offset points')
+
+	# --- 4. Pictographs (Simplified) ---
+	elif chart_type == "pictograph" and icon_config:
+		# A simplified "Waffle Chart" style pictograph
+		# This draws a grid of dots to represent counts
+		count = int(datasets[0]['data'][0]) if datasets else 10
+		rows = 5
+		cols = (count // rows) + 1
+		x_dots = []
+		y_dots = []
+		
+		for i in range(count):
+			x_dots.append(i % cols)
+			y_dots.append(i // cols)
+			
+		plt.scatter(x_dots, y_dots, s=500, marker='o', c='purple') # 'o' acts as a generic icon
+		plt.axis('off')
+		plt.title(f"{title} (1 Dot = {icon_config.get('items_per_icon', 1)} units)")
+
+	# --- Output Handling ---
+	plt.tight_layout()
+	
+	# Save to memory buffer
+	buf = io.BytesIO()
+	plt.savefig(buf, format='png', dpi=100)
+	buf.seek(0)
+	plt.close()
+	
+	# Encode to Base64
+	img_str = base64.b64encode(buf.read()).decode('utf-8')
+	return img_str
+
+
 
 # ---------- Tool declarations for Gemini ----------
 
@@ -250,7 +340,7 @@ SYSTEM_PROMPT = """You are a data analyst assistant for BigQuery.
 - Prefer SELECT-only SQL.
 - When missing a column/table name, use list_datasets/list_tables/get_table_schema.
 - For final answers, provide a brief natural-language summary, include the SQL you ran in a fenced code block, and include the output from the SQL, styled as an HTML <table>, in a fenced code block.
-- If the user asks for a chart illustrating the data, then generate it in JPEG format and add it to the end of the answer in BASE64 format as a fenced JPEG code block. Spend no more than 45 seconds to do this and if it takes longer then skip this request.
+- If the user asks for a chart illustrating the data, use render_complex_chart, add it as a fenced PNG code block.
 - The rest of what follows in this prompt are the data schema and hints on how to build the SQL queries for your data analysis.
 """
 def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
@@ -263,6 +353,8 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 			return json_safe({"schema": get_table_schema(**args)})
 		if name == "run_query":
 			return json_safe(run_query(**args))
+		if name == "render_complex_chart":
+			return json_safe(render_complex_chart(**args))
 		return {"error": f"Unknown tool: {name}"}
 	except Exception as e:
 		return {"error": str(e)}
