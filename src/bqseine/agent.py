@@ -111,8 +111,8 @@ def run_query(sql: str, params: Optional[Dict[str, Any]] = None, dry_run: bool =
 
 # ---------- Tool declarations for Gemini ----------
 
-code_exec_tool = types.Tool(
-    code_execution=types.ToolCodeExecution()
+code_exec_tool = gtypes.Tool(
+    code_execution=gtypes.ToolCodeExecution()
 )
 
 # 2. Define the BigQuery Function Tool using proper types
