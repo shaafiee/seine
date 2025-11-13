@@ -335,6 +335,18 @@ bq_tool = gtypes.Tool(
     ]
 )
 
+def sanitize_for_json(obj):
+	"""
+	Recursively converts Decimal objects to float/int so they are JSON serializable.
+	"""
+	if isinstance(obj, decimal.Decimal):
+		# Convert to int if it's a whole number, else float
+		return int(obj) if obj % 1 == 0 else float(obj)
+	elif isinstance(obj, list):
+		return [sanitize_for_json(i) for i in obj]
+	elif isinstance(obj, dict):
+		return {k: sanitize_for_json(v) for k, v in obj.items()}
+	return obj
 
 SYSTEM_PROMPT = """You are a data analyst assistant for BigQuery.
 - Prefer SELECT-only SQL.
@@ -360,16 +372,18 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 	"""
 	try:
 		if name == "list_datasets":
-			return {"datasets": list_datasets(**args)}
-		if name == "list_tables":
-			return {"tables": list_tables(**args)}
-		if name == "get_table_schema":
-			return {"schema": get_table_schema(**args)}
-		if name == "run_query":
-			return run_query(**args)
-		if name == "render_complex_chart":
+			returned = {"datasets": list_datasets(**args)}
+		elif name == "list_tables":
+			returned = {"tables": list_tables(**args)}
+		elif name == "get_table_schema":
+			returned = {"schema": get_table_schema(**args)}
+		elif name == "run_query":
+			returned = run_query(**args)
+		elif name == "render_complex_chart":
 			return render_complex_chart(**args)
-		return {"error": f"Unknown tool: {name}"}
+		else:
+			return {"error": f"Unknown tool: {name}"}
+		return sanitize_for_json(result)
 	except Exception as e:
 		return {"error": str(e)}
 
@@ -427,6 +441,7 @@ def chat(user_data: list[str],
 		)
 	)
 
+	"""
 	history.insert(
 		0,
 		gtypes.Content(
@@ -434,12 +449,14 @@ def chat(user_data: list[str],
 			parts=[gtypes.Part(text=f"{SYSTEM_PROMPT}\n{additional_instructions}")]
 		)
 	)
+	"""
 
 	# First call: model may respond with text + function_call parts
 	resp = gclient.models.generate_content(
 		model=model,
 		contents=history,
 		config=gen_config,
+		system_instruction=f"{SYSTEM_PROMPT}\n{additional_instructions}"
 	)
 
 	# Collect any tool calls from parts
