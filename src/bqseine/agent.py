@@ -128,7 +128,7 @@ def render_complex_chart(chart_type, title, x_labels=None, datasets=None, z_matr
 		if datasets:
 			for series in datasets:
 				label = series.get("label", "Data")
-				color = series.get("color", None)
+				color = series.get("color", 'black')
 				data = series.get("data", [])
 				
 				if chart_type == "bar":
@@ -331,8 +331,8 @@ def sanitize_for_json(obj):
 SYSTEM_PROMPT = """You are a data analyst assistant for BigQuery.
 - Prefer SELECT-only SQL.
 - When missing a column/table name, use list_datasets/list_tables/get_table_schema.
-- For final answer, provide a brief natural-language summary, include the SQL you ran in a fenced code block, and include the output from the SQL, styled as an HTML <table> in a fenced code block.
-- If the user asks, use render_complex_chart to get BASE64 of a chart and add that to end of the final answer as a fenced PNG code block.
+- When user asks for a chart use render_complex_chart to generate it.
+- For final answer, provide a brief natural-language summary with markdown styling, include the SQL you ran in a fenced code block, and include the output from the SQL styled as an HTML <table> in a fenced code block.
 - The rest of what follows in this prompt are the data schema and hints on how to build the SQL queries for your data analysis.
 """
 def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
@@ -346,7 +346,7 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 		if name == "run_query":
 			return json_safe(run_query(**args))
 		if name == "render_complex_chart":
-			return {'chart': render_complex_chart(**args)}
+			return {'BASE64': render_complex_chart(**args)}
 		return {"error": f"Unknown tool: {name}"}
 	except Exception as e:
 		return {"error": str(e)}
