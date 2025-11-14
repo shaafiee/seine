@@ -331,8 +331,8 @@ def sanitize_for_json(obj):
 SYSTEM_PROMPT = """You are a data analyst assistant for BigQuery.
 - Prefer SELECT-only SQL.
 - When missing a column/table name, use list_datasets/list_tables/get_table_schema.
-- When user asks for a chart use render_complex_chart to generate it and return the value of the key 'image_base64' in the response dictionary.
-- For final answer, provide a brief natural-language summary with markdown styling, include the SQL you ran in a fenced code block, and include the output from the SQL styled as an HTML <table> in a fenced code block.
+- For final answer, provide a brief natural-language summary, include the SQL you ran in a fenced code block, and include the output from the SQL styled as an HTML <table> in a fenced code block.
+- If user asks for a chart use render_complex_chart to generate it and add the value of the key 'image_base64' in the response dictionary to the final answer as a fenced PNG code block.
 - The rest of what follows in this prompt are the data schema and hints on how to build the SQL queries for your data analysis.
 """
 def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
