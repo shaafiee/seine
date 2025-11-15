@@ -448,7 +448,7 @@ def chat(user_data: list[str],
 							],
 						)
 					)
-					return sanitized_result
+					return [sanitized_result, history]
 	
 			tool_response_contents.append(
 				gtypes.Content(
