@@ -448,7 +448,8 @@ def chat(user_data: list[str],
 							],
 						)
 					)
-					history.pop()
+					history.append(resp.candidates[0].content)
+					history.extend(tool_response_contents)
 					return [sanitized_result, history]
 	
 			tool_response_contents.append(
