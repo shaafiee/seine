@@ -450,7 +450,10 @@ def chat(user_data: list[str],
 
 	# Execute each requested tool
 
-	while tool_calls:
+	final_response = None
+
+	#while tool_calls:
+	if True:
 		tool_response_contents: list[gtypes.Content] = []
 		for fc in tool_calls:
 			result = dispatch_tool(fc.name, dict(fc.args))
@@ -499,10 +502,10 @@ def chat(user_data: list[str],
 			config=gen_config,
 		)
 
-		tool_calls = []
-		for part in resp.candidates[0].content.parts:
-			if part.function_call:
-				tool_calls.append(part.function_call)
+		#tool_calls = []
+		#for part in resp.candidates[0].content.parts:
+		#	if part.function_call:
+		#		tool_calls.append(part.function_call)
 
 	# Extend history with the model's function_call turn + tool responses
 	# history.append(resp.candidates[0].content)
