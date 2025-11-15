@@ -374,7 +374,6 @@ def chat(user_data: list[str],
 	if history is None:
 		history = []
 
-	"""
 	if not history:
 		history.append(
 			gtypes.Content(
@@ -382,7 +381,6 @@ def chat(user_data: list[str],
 				parts=[gtypes.Part(text=f"{SYSTEM_PROMPT}\n{additional_instructions}")]
 			)
 		)
-	"""
 
 	# Add the new user message
 	history.append(
@@ -392,6 +390,7 @@ def chat(user_data: list[str],
 		)
 	)
 
+	"""
 	history.insert(
 		0,
 		gtypes.Content(
@@ -399,6 +398,7 @@ def chat(user_data: list[str],
 			parts=[gtypes.Part(text=f"{SYSTEM_PROMPT}\n{additional_instructions}")]
 		)
 	)
+	"""
 
 	# First call: model may respond with text + function_call parts
 	resp = gclient.models.generate_content(
@@ -465,9 +465,13 @@ def chat(user_data: list[str],
 				)
 			)
 
+		# Extend history with the model's function_call turn + tool responses
+		history.append(resp.candidates[0].content)
+		history.extend(tool_response_contents)
+
 		final_resp = gclient.models.generate_content(
 			model=model,
-			contents=[*history, *tool_response_contents],
+			contents=history,
 			config=gen_config,
 		)
 
@@ -476,11 +480,8 @@ def chat(user_data: list[str],
 		#	if part.function_call:
 		#		tool_calls.append(part.function_call)
 
-	# Extend history with the model's function_call turn + tool responses
-	# history.append(resp.candidates[0].content)
-	# history.extend(tool_response_contents)
 
 	# Second call: model now sees tool outputs and should produce final answer text
 
-	return final_resp
+	return [final_resp, history]
 
