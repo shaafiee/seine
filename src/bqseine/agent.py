@@ -119,7 +119,7 @@ def render_complex_chart(chart_type, title, x_labels=None, datasets=None, z_matr
 	"""
 	Generates a chart based on the 'Super-Schema' and returns a Base64 image string.
 	"""
-	plt.figure(figsize=(7, 5))
+	plt.figure(figsize=(10, 8))
 	plt.title(title, fontsize=12, pad=20)
 	
 	# --- 1. Basic Charts (Bar, Line, Scatter) ---
@@ -128,7 +128,7 @@ def render_complex_chart(chart_type, title, x_labels=None, datasets=None, z_matr
 		if datasets:
 			for series in datasets:
 				label = series.get("label", "Data")
-				color = series.get("color", 'black')
+				color = series.get("color", None)
 				data = series.get("data", [])
 				
 				if chart_type == "bar":
@@ -448,6 +448,7 @@ def chat(user_data: list[str],
 							],
 						)
 					)
+					history.pop()
 					return [sanitized_result, history]
 	
 			tool_response_contents.append(
