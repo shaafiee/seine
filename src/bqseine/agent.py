@@ -415,7 +415,7 @@ def chat(user_data: list[str],
 
 	if not tool_calls:
 		# No tools requested → just return; caller can use resp.text safely
-		return [resp, None]
+		return [resp, history]
 
 	# Execute each requested tool
 
