@@ -415,7 +415,7 @@ def chat(user_data: list[str],
 
 	if not tool_calls:
 		# No tools requested → just return; caller can use resp.text safely
-		return resp
+		return [resp, None]
 
 	# Execute each requested tool
 
@@ -448,7 +448,7 @@ def chat(user_data: list[str],
 							],
 						)
 					)
-					return [sanitized_result, history]
+					return [sanitized_result, *history]
 	
 			tool_response_contents.append(
 				gtypes.Content(
@@ -483,5 +483,5 @@ def chat(user_data: list[str],
 
 	# Second call: model now sees tool outputs and should produce final answer text
 
-	return [final_resp, history]
+	return [final_resp, *history]
 
