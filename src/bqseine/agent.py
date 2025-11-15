@@ -315,19 +315,6 @@ bq_tool = gtypes.Tool(
     ]
 )
 
-def sanitize_for_json(obj):
-	"""
-	Recursively converts Decimal objects to float/int so they are JSON serializable.
-	"""
-	if isinstance(obj, decimal.Decimal):
-		# Convert to int if it's a whole number, else float
-		return int(obj) if obj % 1 == 0 else float(obj)
-	elif isinstance(obj, list):
-		return [sanitize_for_json(i) for i in obj]
-	elif isinstance(obj, dict):
-		return {k: sanitize_for_json(v) for k, v in obj.items()}
-	return obj
-
 SYSTEM_PROMPT = """You are a data analyst assistant for BigQuery.
 - Prefer SELECT-only SQL.
 - When missing a column/table name, use list_datasets/list_tables/get_table_schema.
@@ -350,24 +337,6 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 		return {"error": f"Unknown tool: {name}"}
 	except Exception as e:
 		return {"error": str(e)}
-	"""
-	try:
-		returned = {}
-		if name == "list_datasets":
-			returned = {"datasets": list_datasets(**args)}
-		elif name == "list_tables":
-			returned = {"tables": list_tables(**args)}
-		elif name == "get_table_schema":
-			returned = {"schema": get_table_schema(**args)}
-		elif name == "run_query":
-			returned = run_query(**args)
-		elif name == "render_complex_chart":
-			returned = render_complex_chart(**args)
-		else:
-			return {"error": f"Unknown tool: {name}"}
-		return sanitize_for_json(returned)
-	"""
-
 
 def chat(user_data: list[str],
 			history: list[gtypes.Content] | None = None,
@@ -459,7 +428,7 @@ def chat(user_data: list[str],
 			result = dispatch_tool(fc.name, dict(fc.args))
 	
 			if fc.name == "render_complex_chart":
-				sanitized_result = sanitize_for_json(result)
+				sanitized_result = json_safe(result)
 				if "image_base64" in sanitized_result:
 					print("Chart generated. Returning image to user.")
 					tool_response = {
