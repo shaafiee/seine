@@ -346,7 +346,7 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 		if name == "run_query":
 			return json_safe(run_query(**args))
 		if name == "render_complex_chart":
-			return {'chart': render_complex_chart(**args)}
+			return {'image_base64': render_complex_chart(**args)}
 		return {"error": f"Unknown tool: {name}"}
 	except Exception as e:
 		return {"error": str(e)}
@@ -449,33 +449,66 @@ def chat(user_data: list[str],
 		return resp
 
 	# Execute each requested tool
-	tool_response_contents: list[gtypes.Content] = []
-	for fc in tool_calls:
-		result = dispatch_tool(fc.name, dict(fc.args))
-		tool_response_contents.append(
-			gtypes.Content(
-				role="tool",
-				parts=[
-					gtypes.Part(
-						function_response=gtypes.FunctionResponse(
-							name=fc.name,
-							response=result,
-							id=fc.id
+
+	while tool_calls:
+		tool_response_contents: list[gtypes.Content] = []
+		for fc in tool_calls:
+			result = dispatch_tool(fc.name, dict(fc.args))
+	
+			if fc.name == "render_complex_chart":
+				sanitized_result = sanitize_for_json(result)
+				if "image_base64" in sanitized_result:
+					print("Chart generated. Returning image to user.")
+					tool_response = {
+						"status": "Chart successfully generated and displayed to user."
+					}
+					tool_response_contents.append(
+						gtypes.Content(
+							role="tool",
+							parts=[
+								gtypes.Part(
+									function_response=gtypes.FunctionResponse(
+										name=fc.name,
+										response=tool_response,
+										id=fc.id
+									)
+								)
+							],
 						)
 					)
-				],
+					return sanitized_result
+	
+			tool_response_contents.append(
+				gtypes.Content(
+					role="tool",
+					parts=[
+						gtypes.Part(
+							function_response=gtypes.FunctionResponse(
+								name=fc.name,
+								response=result,
+								id=fc.id
+							)
+						)
+					],
+				)
 			)
+
+		final_resp = gclient.models.generate_content(
+			model=model,
+			contents=[*history, *tool_response_contents],
+			config=gen_config,
 		)
 
+		tool_calls = []
+		for part in resp.candidates[0].content.parts:
+			if part.function_call:
+				tool_calls.append(part.function_call)
+
 	# Extend history with the model's function_call turn + tool responses
-	history.append(resp.candidates[0].content)
-	history.extend(tool_response_contents)
+	# history.append(resp.candidates[0].content)
+	# history.extend(tool_response_contents)
 
 	# Second call: model now sees tool outputs and should produce final answer text
-	final_resp = gclient.models.generate_content(
-		model=model,
-		contents=history,
-		config=gen_config,
-	)
 
 	return final_resp
+
