@@ -123,7 +123,7 @@ def render_complex_chart(chart_type, title, x_labels=None, datasets=None, z_matr
 	plt.title(title, fontsize=12, pad=20)
 	
 	# --- 1. Basic Charts (Bar, Line, Scatter) ---
-	if chart_type in ["bar", "line", "scatter"]:
+	if chart_type in ["bar", "line", "scatter", "pie"]:
 		# Check if we have comparative datasets or simple x/y
 		if datasets:
 			for series in datasets:
@@ -138,6 +138,10 @@ def render_complex_chart(chart_type, title, x_labels=None, datasets=None, z_matr
 					plt.plot(x_labels, data, label=label, marker='o', color=color)
 				elif chart_type == "scatter":
 					plt.scatter(x_labels, data, label=label, color=color)
+				elif chart_type == "pie":
+					plt.scatter(data, labels=x_labels, autopct='%1.1f%%', startangle=90)
+					plt.title(label)
+					plt.axis('equal')
 			plt.legend()
 		
 	# --- 2. Heatmaps (Matrix Data) ---
@@ -250,7 +254,7 @@ bq_tool = gtypes.Tool(
                     "chart_type": gtypes.Schema(
                         type=gtypes.Type.STRING,
                         enum=[
-                            "bar", "line", "scatter", # Basic
+                            "bar", "line", "scatter", "pie", # Basic
                             "heatmap",                       # Matrix
                             "spatial_map",                   # Geo
                         ],
