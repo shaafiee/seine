@@ -142,10 +142,10 @@ def render_complex_chart(chart_type, title, x_labels=None, datasets=None, z_matr
 					plt.pie(data, labels=x_labels, autopct='%1.1f%%', startangle=90)
 
 			if chart_type == "pie":
-				plt.title(label)
+				#plt.title(label)
 				plt.axis('equal')
-
-			plt.legend()
+			else:
+				plt.legend()
 		
 	# --- 2. Heatmaps (Matrix Data) ---
 	elif chart_type == "heatmap" and z_matrix:
