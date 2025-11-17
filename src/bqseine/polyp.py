@@ -1,4 +1,3 @@
-from gcp_secrets.secrets import *
 from google.cloud import bigquery
 from google.cloud.exceptions import NotFound
 from datetime import date, datetime
@@ -11,7 +10,6 @@ tableSchema = {}
 tableCurrentSchema = {}
 tableCurrentSchemaType = {}
 tableReset = {}
-#client  = bigquery.Client()
 
 #    * EXCEPT(is_generated, generation_expression, is_stored, is_updatable)
 tableColumnsQuery = """
