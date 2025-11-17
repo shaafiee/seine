@@ -484,10 +484,9 @@ def chat(user_data: list[str],
 		)
 
 		tool_calls = []
-		for part in resp.candidates[0].content.parts:
+		for part in final_resp.candidates[0].content.parts:
 			if part.function_call:
 				tool_calls.append(part.function_call)
-
 
 	# Second call: model now sees tool outputs and should produce final answer text
 
