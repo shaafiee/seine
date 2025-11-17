@@ -428,8 +428,7 @@ def chat(user_data: list[str],
 
 	final_response = None
 
-	#while tool_calls:
-	if True:
+	while tool_calls:
 		tool_response_contents: list[gtypes.Content] = []
 		for fc in tool_calls:
 			result = dispatch_tool(fc.name, dict(fc.args))
@@ -484,10 +483,10 @@ def chat(user_data: list[str],
 			config=gen_config,
 		)
 
-		#tool_calls = []
-		#for part in resp.candidates[0].content.parts:
-		#	if part.function_call:
-		#		tool_calls.append(part.function_call)
+		tool_calls = []
+		for part in resp.candidates[0].content.parts:
+			if part.function_call:
+				tool_calls.append(part.function_call)
 
 
 	# Second call: model now sees tool outputs and should produce final answer text
