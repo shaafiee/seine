@@ -2,7 +2,7 @@ from gcp_secrets.secrets import *
 from google.cloud import bigquery
 from google.cloud.exceptions import NotFound
 from datetime import date, datetime
-from db_lib import *
+#from db_lib import *
 import json
 
 
@@ -367,15 +367,15 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 		dataToLoad[curKey].append(tempRow)
 		lastSeineId[curKey] += 1
 
-	conn, cur = dbConnect()
-	for tableName in dataToLoad.keys():
-		curTable = client.get_table(myGoogleProject + f".{datasetName}." + tableName)
-		errors = client.insert_rows_json(
-			curTable, dataToLoad[tableName], row_ids=[None] * len(dataToLoad[tableName])
-		)
-		if errors == []:
-			print("Loaded " + str(len(dataToLoad[tableName])) + " rows into " + tableName)
-		else:
-			print("FAILED: loading " + str(len(dataToLoad[tableName])) + " rows into " + tableName)
-			print(errors)
+	#conn, cur = dbConnect()
+	#for tableName in dataToLoad.keys():
+	#	curTable = client.get_table(myGoogleProject + f".{datasetName}." + tableName)
+	#	errors = client.insert_rows_json(
+	#		curTable, dataToLoad[tableName], row_ids=[None] * len(dataToLoad[tableName])
+	#	)
+	#	if errors == []:
+	#		print("Loaded " + str(len(dataToLoad[tableName])) + " rows into " + tableName)
+	#	else:
+	#		print("FAILED: loading " + str(len(dataToLoad[tableName])) + " rows into " + tableName)
+	#		print(errors)
 			
