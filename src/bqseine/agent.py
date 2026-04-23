@@ -350,7 +350,12 @@ def chat(user_data: list[str],
 			modelTemperature = 0.4,
 			modelMode = "AUTO",
 			model: str = "gemini-2.5-pro",
-			thinking = 1024) -> gtypes.GenerateContentResponse:
+			thinking = 1024,
+			sysprompt = '') -> gtypes.GenerateContentResponse:
+
+	global SYSTEM_PROMPT
+	if len(sysprompt) > 1:
+		SYSTEM_PROMPT = sysprompt
 
 	safety_settings = [
 		gtypes.SafetySetting(

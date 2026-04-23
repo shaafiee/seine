@@ -96,7 +96,98 @@ def incrementId(curKey):
 		lastSeineId[curKey] = 1
 
 
-def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idField = None):
+def dictToBQ(spec: dict) -> list[bigquery.SchemaField]:
+    def _field(name: str, node) -> bigquery.SchemaField:
+        # REPEATED shorthand: ["TYPE"] or [ {record_spec} ]
+        if isinstance(node, list):
+            if len(node) != 1:
+                raise ValueError(f"{name}: REPEATED shorthand must be a 1-item list, got {node}")
+            inner = node[0]
+            if isinstance(inner, str):
+                return bigquery.SchemaField(name, inner, mode="REPEATED")
+            if isinstance(inner, dict):
+                # repeated record
+                subfields = dictToBQ(inner.get("fields", {}))
+                return bigquery.SchemaField(name, "RECORD", mode="REPEATED", fields=subfields)
+            raise TypeError(f"{name}: unsupported list inner type: {type(inner)}")
+
+        # Primitive shorthand: "STRING"
+        if isinstance(node, str):
+            return bigquery.SchemaField(name, node)
+
+        # Full dict form
+        if isinstance(node, dict):
+            bq_type = node.get("type")
+            if not bq_type:
+                raise ValueError(f"{name}: missing 'type'")
+
+            mode = node.get("mode", "NULLABLE")
+            desc = node.get("description", "")
+            sub = node.get("fields")
+
+            if bq_type.upper() == "RECORD":
+                if not isinstance(sub, dict):
+                    raise ValueError(f"{name}: RECORD requires dict 'fields'")
+                subfields = dictToBQ(sub)
+                return bigquery.SchemaField(name, "RECORD", mode=mode, fields=subfields, description=desc)
+
+            return bigquery.SchemaField(name, bq_type, mode=mode, description=desc)
+
+        raise TypeError(f"{name}: unsupported node type: {type(node)}")
+
+    return [_field(name, node) for name, node in spec.items()]
+
+
+def schema(dataset, bqschema):
+	bqready = dictToBQ(bqschema)
+	client = None
+	try:
+		client = bigquery.Client(project=myGoogleProject)
+	except:
+		raise ExceptionType(f"Could not connect to {myGoogleProject}")
+
+	datasetName = "seine"
+	try:
+		seineDataset = client.get_dataset(myGoogleProject + f".{datasetName}")
+	except NotFound:
+		seineDataset = bigquery.Dataset(myGoogleProject + f".{datasetName}")
+		seineDataset.location = bqRegion
+		seineDataset = client.create_dataset(seineDataset, timeout=30)
+		print("Created dataset {}".format(seineDataset.dataset_id))
+
+	try:
+		table = bigquery.Table(dataset, schema=bqready)
+		table = client.create_table(table)
+	except:
+		pass
+
+
+def sqlAdd(sqlString, key, value, curTier = 0):
+	if isinstance(value, list):
+		arrayLit = ''
+		if isinstance(, str):
+			arrayLit = "'" + "','".join(value) + "'"
+		else:
+			arrayLit = ",".join(value)
+		if curTier == 0:
+			sqlString = sqlString + ",[" + arrayLit + "]"
+		else:
+			sqlString = sqlString + ",[" + arrayLit + "] as " + key
+	elif isinstance(value, str):
+		if curTier == 0:
+			sqlString = f"{sqlString},'{value}'"
+		else:
+			sqlString = f"{sqlString},'{value}' as {key}"
+	else:
+		if curTier == 0:
+			sqlString = f"{sqlString},{value}"
+		else:
+			sqlString = f"{sqlString},{value} as {key}"
+		
+	return sqlString
+
+
+def sync(myGoogleProject, bqschema, blob, curKey, bqRegion = 'US', firstReset = False, idField = None):
 	global lastSeineId
 	global tableSchema
 	global tableReset
@@ -106,7 +197,9 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 	if len(curKey) < 1:
 		raise ExceptionType("A default current key (second arg) should be provided")
 
+	initKey = curKey
 	stack = []
+	curTier = 0
 	if isinstance(blob, list):
 		for part in blob:
 			stack.insert(0, (curKey, part, curKey, 0))
@@ -132,19 +225,26 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 	dataToLoad = {}
 	seineDataset = False
 	dataset = ""
-	datasetName = "seine_" + curKey
+	datasetName = "seine"
 	try:
 		seineDataset = client.get_dataset(myGoogleProject + f".{datasetName}")
 	except NotFound:
-		seineDataset = bigquery.Dataset(myGoogleProject + f".{datasetName}")
-		seineDataset.location = bqRegion
-		seineDataset = client.create_dataset(seineDataset, timeout=30)
+		schema(datasetName, bqschema) 
+		seineDataset = client.get_dataset(myGoogleProject + f".{datasetName}")
 		print("Created dataset {}".format(seineDataset.dataset_id))
 	
 	valuesArray = []
 	currentDepth = 0
+
+	structOpened = 0
+
+	curTier = 0
+	lastTier = 0
+	sqlString = ''
+	keyString = ''
+
 	while stack:
-		curKey, curDict, lastKey, parentId = stack.pop()
+		curKey, curDict, lastKey, curTier = stack.pop()
 		currentDepth += 1
 		fieldTypes = {}
 		fields = []
@@ -159,6 +259,21 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 		print(curDict)
 		noUpdateNeeded = False
 
+		strTabs = ''
+		if curTier <> lastTier:
+			tabList = ["\t"] * curTier
+			strTabs = ''.join(tabList)
+		if curTier > lastTier:
+			sqlString = f"{strTabs}{sqlString}STRUCT(\n"
+		if curTier < lastTier and curTier != 0:
+			sqlString = f"{strTabs}{sqlString})\n"
+
+		lastTier = curTier
+
+		if curTier == 0:
+			keyString = f"{keyString},{key}"
+
+		"""
 		if curKey not in lastSeineId.keys():
 			lastSeineId[curKey] = 1
 
@@ -193,9 +308,11 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 				pass
 			tableCurrentSchema[curKey] = []
 			tableCurrentSchemaType[curKey] = {}
+		"""
 		
 		if isinstance(curDict, list):
 			if not isinstance(curDict[0], dict):
+				"""
 				fields.append(curKey)
 				fieldTypes[curKey] = resolveType(json.dumps(curDict))
 				valuePlaceholders[curKey] = testValue(json.dumps(curDict), curKey, curKey)
@@ -203,10 +320,12 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 					tableCurrentSchema[curKey].append(curKey)
 					keyNotInSchema[curKey].append(curKey)
 					#tableCurrentSchemaType[curKey][curKey] = resolveType(json.dumps(curDict))
+				"""
+				sqlString = sqlAdd(sqlString, key, value, curTier)
 			else:
 				noUpdateNeeded = True
 				for tempDict in curDict:
-					stack.insert(0, (curKey, tempDict, lastKey, lastSeineId[lastKey]))
+					stack.insert(0, (curKey, tempDict, lastKey, curTier + 1))
 				continue
 
 		elif isinstance(curDict, dict):
@@ -214,6 +333,7 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 				if isinstance(value, list):
 					if len(value) > 0:
 						if not isinstance(value[0], dict) and key not in ["edges"]:
+							"""
 							fields.append(key)
 							fieldTypes[key] = resolveType(json.dumps(value))
 							valuePlaceholders[key] = testValue(json.dumps(value), curKey, key)
@@ -221,20 +341,17 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 								tableCurrentSchema[curKey].append(key)
 								keyNotInSchema[curKey].append(key)
 								#tableCurrentSchemaType[curKey][key] = resolveType(json.dumps(value))
+							"""
+							sqlString = sqlAdd(sqlString, key, value, curTier)
 						elif key in ["edges"]:
 							noUpdateNeeded = True
 							for part in value:
-								stack.insert(0, (curKey, part, lastKey,  lastSeineId[lastKey]))
+								stack.insert(0, (curKey, part, lastKey, curTier))
 						else:
 							for part in value:
-								stack.insert(0, (curKey + "_" + key, part, curKey,  lastSeineId[lastKey]))
-							#fields.append(key)
-							#fieldTypes[key] = resolveType(json.dumps(value))
-							#valuePlaceholders[key] = testValue(json.dumps(value), curKey, key)
-							#if key not in tableCurrentSchema[curKey]:
-							#	tableCurrentSchema[curKey].append(key)
-							#	keyNotInSchema[curKey].append(key)
+								stack.insert(0, (curKey + "_" + key, part, curKey, curTier + 1))
 					else:
+						"""
 						fields.append(key)
 						fieldTypes[key] = resolveType(json.dumps(value))
 						valuePlaceholders[key] = testValue(json.dumps(value), curKey, key)
@@ -242,12 +359,15 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 							tableCurrentSchema[curKey].append(key)
 							keyNotInSchema[curKey].append(key)
 							#tableCurrentSchemaType[curKey][key] = resolveType(json.dumps(value))
+						"""
+						sqlString = sqlAdd(sqlString, key, value, curTier)
 				elif isinstance(value, dict):
 					if key in ["node"]:
 						noUpdateNeeded = True
-						stack.insert(0, (curKey, value, lastKey,  lastSeineId[lastKey]))
+						stack.insert(0, (curKey, value, lastKey, curTier))
 					else:
-						stack.insert(0, (curKey + "_" + key, value, curKey,  lastSeineId[lastKey]))
+						stack.insert(0, (curKey + "_" + key, value, curKey, curTier + 1))
+						"""
 						fields.append(key)
 						fieldTypes[key] = resolveType(lastSeineId[curKey])
 						valuePlaceholders[key] = testValue(lastSeineId[curKey], curKey, key)
@@ -255,7 +375,9 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 							tableCurrentSchema[curKey].append(key)
 							keyNotInSchema[curKey].append(key)
 							#tableCurrentSchemaType[curKey][key] = resolveType(json.dumps(value))
+						"""
 				else:
+					"""
 					# Add schema
 					if key not in fields:
 						fields.append(key)
@@ -265,7 +387,13 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 							tableCurrentSchema[curKey].append(key)
 							keyNotInSchema[curKey].append(key)
 							#tableCurrentSchemaType[curKey][key] = resolveType(value)
+					"""
+					sqlString = sqlAdd(sqlString, key, value, curTier)
 
+		else:
+					sqlString = sqlAdd(sqlString, key, value, curTier)
+
+		"""
 		elif isinstance(curDict, str) or isinstance(curDict, int) or isinstance(curDict, float):
 			fields.append(curKey)
 			fieldTypes[curKey] = resolveType(curDict)
@@ -283,6 +411,7 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 				tableCurrentSchema[curKey].append(curKey)
 				keyNotInSchema[curKey].append(curKey)
 				#tableCurrentSchemaType[curKey][curKey] = resolveType(curDict)
+		"""
 
 		#if len(fields) < 1 and parentId is None:
 		#	continue
@@ -290,6 +419,7 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 		if noUpdateNeeded:
 			continue
 
+		"""
 		if len(keyNotInSchema[curKey]) > 0 or curKey not in tableReset.keys():
 			tableReset[curKey] = True
 			curTableName = myGoogleProject + f".{datasetName}." + curKey
@@ -359,6 +489,8 @@ def sync(myGoogleProject, blob, curKey, bqRegion = 'US', firstReset = False, idF
 			"seine_parent_id": parentId,
 			"injected": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
 		}
+		"""
+
 		for idx, field in enumerate(fields):
 			tempRow[field] = valuePlaceholders[field]
 		print(tempRow)
