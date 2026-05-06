@@ -432,7 +432,7 @@ def chat(user_data: list[str],
 		src=[requestData]
 	)
 
-	return job
+	return job.name
 
 
 
@@ -448,7 +448,7 @@ def process(job = '',
 	if len(job) < 1:
 		return [None, None, job, 'ERROR']
 
-	completed_job = gclient.batches.get(name=job.name)
+	completed_job = gclient.batches.get(name=job)
 	if completed_job.state == 'FAILED':
 		return [None, None, job, 'FAILED']
 
@@ -497,7 +497,7 @@ def process(job = '',
 
 	if not tool_calls:
 		# No tools requested → just return; caller can use resp.text safely
-		return [resp, history]
+		return [resp, history, job, jobStatus]
 
 	# Execute each requested tool
 
@@ -557,10 +557,12 @@ def process(job = '',
 			"config": gen_config
 		}
 
-		job = gclient.models.create_batch_job(
+		jobThing = gclient.models.create_batch_job(
 			model=model,
 			src=[requestData]
 		)
+
+		job = jobThing.name
 
 		jobStatus = "CONTINUING"
 
