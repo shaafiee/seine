@@ -427,9 +427,12 @@ def chat(user_data: list[str],
 		"config": gen_config
 	}
 
-	job = gclient.models.create_batch_job(
+	job = gclient.batches.create(
 		model=model,
 		src=[requestData]
+		config = {
+			'display_name': user_data[-1],
+		},
 	)
 
 	return job.name
@@ -560,6 +563,9 @@ def process(job = '',
 		jobThing = gclient.models.create_batch_job(
 			model=model,
 			src=[requestData]
+			config = {
+				'display_name': job,
+			},
 		)
 
 		job = jobThing.name
