@@ -452,11 +452,16 @@ def process(job = '',
 		return [None, None, job, 'ERROR']
 
 	completed_job = gclient.batches.get(name=job)
-	if completed_job.state == 'FAILED':
-		return [None, None, job, 'FAILED']
+	theState = completed_job_state
 
-	if completed_job.state != 'SUCCEEDED':
-		return [None, None, job, 'PROCESSING']
+	if theState == 'FAILED':
+		return [completed_job, None, job, theState]
+
+	if theState in ['FAILED', 'CANCELLED', 'EXPIRED']:
+		return [completed_job, None, job, theState]
+
+	if theState != 'SUCCEEDED':
+		return [completed_job, None, job, theState]
 	
 	safety_settings = [
 		gtypes.SafetySetting(
