@@ -452,7 +452,7 @@ def process(job = '',
 		return [None, None, job, 'ERROR']
 
 	completed_job = gclient.batches.get(name=job)
-	theState = completed_job_state
+	theState = completed_job.state
 
 	if theState == 'FAILED':
 		return [completed_job, None, job, theState]
