@@ -479,6 +479,8 @@ def process(job = '',
 		function_calling_config=gtypes.FunctionCallingConfig(mode="AUTO")
 	)
 
+	jobStatus = "DONE"
+
 	gen_config = None
 	if notools:
 		gen_config = gtypes.GenerateContentConfig(
@@ -509,7 +511,6 @@ def process(job = '',
 
 	# Execute each requested tool
 
-	jobStatus = "DONE"
 
 	while tool_calls:
 		tool_response_contents: list[gtypes.Content] = []
