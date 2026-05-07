@@ -495,7 +495,7 @@ def process(job = '',
 			thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
 		)
 
-	resp = completed_job.results[0].response
+	resp = completed_job.inlined_responses[0].response
 
 	# Collect any tool calls from parts
 	tool_calls = []
