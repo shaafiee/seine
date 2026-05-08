@@ -405,12 +405,12 @@ def chat(user_data: list[str],
 		)
 
 	# Add the new user message
-	history.append(
-		gtypes.Content(
-			role="user",
-			parts=[gtypes.Part(text=user_prompt)]
-		)
-	)
+	#history.append(
+	#	gtypes.Content(
+	#		role="user",
+	#		parts=[gtypes.Part(text=user_prompt)]
+	#	)
+	#)
 
 	"""
 	history.insert(
