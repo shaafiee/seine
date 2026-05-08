@@ -502,11 +502,12 @@ def process(job = '',
 	# Collect any tool calls from parts
 	tool_calls = []
 	try:
-		for part in resp.candidates[0].content.parts:
-			if part.function_call:
-				tool_calls.append(part.function_call)
-	else:
-		return [completed_job, None, job, 'FAILED']
+		for candidate in resp.candidates:
+			for part in candidate.content.parts:
+				if part.function_call:
+					tool_calls.append(part.function_call)
+	except:
+		return [completed_job, None, job, 'POSSIBLE']
 
 	if not tool_calls:
 		# No tools requested → just return; caller can use resp.text safely
