@@ -379,7 +379,7 @@ def chat(user_data: list[str],
 		gen_config = gtypes.GenerateContentConfig(
 			safety_settings=safety_settings,
 			temperature=modelTemperature,
-			thinking_config=gtypes.ThinkingConfig(thinking_level=thinking) 
+			thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
 		)
 	else:
 		gen_config = gtypes.GenerateContentConfig(
@@ -387,7 +387,7 @@ def chat(user_data: list[str],
 			tool_config=tool_config_any,
 			safety_settings=safety_settings,
 			temperature=modelTemperature,
-			thinking_config=gtypes.ThinkingConfig(thinking_level=thinking) 
+			thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
 		)
 
 
@@ -486,7 +486,7 @@ def process(job = '',
 		gen_config = gtypes.GenerateContentConfig(
 			safety_settings=safety_settings,
 			temperature=modelTemperature,
-			thinking_config=gtypes.ThinkingConfig(thinking_level=thinking) 
+			thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
 		)
 	else:
 		gen_config = gtypes.GenerateContentConfig(
@@ -494,7 +494,7 @@ def process(job = '',
 			tool_config=tool_config_any,
 			safety_settings=safety_settings,
 			temperature=modelTemperature,
-			thinking_config=gtypes.ThinkingConfig(thinking_level=thinking) 
+			thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
 		)
 
 	resp = completed_job.dest.inlined_responses[0].response
