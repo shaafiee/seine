@@ -351,7 +351,8 @@ def chat(user_data: list[str],
 			modelMode = "AUTO",
 			model: str = "gemini-2.5-pro",
 			thinking = 1024,
-			sysprompt = '') -> gtypes.GenerateContentResponse:
+			sysprompt = '',
+			noTools = False) -> gtypes.GenerateContentResponse:
 
 	global SYSTEM_PROMPT
 	if len(sysprompt) > 1:
@@ -373,13 +374,22 @@ def chat(user_data: list[str],
 		function_calling_config=gtypes.FunctionCallingConfig(mode="AUTO")
 	)
 
-	gen_config = gtypes.GenerateContentConfig(
-		tools=[bq_tool],
-		tool_config=tool_config_any,
-		safety_settings=safety_settings,
-		temperature=modelTemperature,
-		thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
-	)
+	gen_config = None
+
+	if noTools:
+		gen_config = gtypes.GenerateContentConfig(
+			safety_settings=safety_settings,
+			temperature=modelTemperature,
+			thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
+		)
+	else:
+		gen_config = gtypes.GenerateContentConfig(
+			tools=[bq_tool],
+			tool_config=tool_config_any,
+			safety_settings=safety_settings,
+			temperature=modelTemperature,
+			thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
+		)
 
 	user_prompt = user_data[0]
 	additional_instructions = user_data[1]
@@ -394,13 +404,13 @@ def chat(user_data: list[str],
 			)
 		)
 
-	# Add the new user message
-	history.append(
-		gtypes.Content(
-			role="user",
-			parts=[gtypes.Part(text=user_prompt)]
+		# Add the new user message
+		history.append(
+			gtypes.Content(
+				role="user",
+				parts=[gtypes.Part(text=user_prompt)]
+			)
 		)
-	)
 
 	"""
 	history.insert(
