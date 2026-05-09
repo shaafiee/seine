@@ -346,7 +346,7 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
 		return {"error": str(e)}
 
 def chat(user_data: list[str],
-			history: list[gtypes.Content] | None = None,
+			history = None,
 			modelTemperature = 0.4,
 			modelMode = "AUTO",
 			model: str = "gemini-2.5-pro",
@@ -357,7 +357,8 @@ def chat(user_data: list[str],
 
 	if len(apiKey) > 0:
 		gclient = genai.Client(
-			api_key=apiKey
+			api_key=apiKey,
+			http_options={'api_version': 'v1beta'}
 		)
 
 	global SYSTEM_PROMPT
@@ -399,7 +400,7 @@ def chat(user_data: list[str],
 
 	user_prompt = user_data[0]
 	additional_instructions = user_data[1]
-	if history is None:
+	if not isinstance(history, list):
 		history = []
 
 	if not history:
