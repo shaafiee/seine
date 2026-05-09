@@ -377,17 +377,25 @@ def chat(user_data: list[str],
 	gen_config = None
 	if notools:
 		gen_config = gtypes.GenerateContentConfig(
-			safety_settings=safety_settings,
+			#safety_settings=safety_settings,
 			temperature=modelTemperature,
-			thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
+			#thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
+			#thinking_config=gtypes.ThinkingConfig(
+			#	include_thoughts=True, # Allows you to see the logic in the response
+			#	thinking_budget=thinking    # The numeric budget we discussed
+			#)
 		)
 	else:
 		gen_config = gtypes.GenerateContentConfig(
 			tools=[bq_tool],
 			tool_config=tool_config_any,
-			safety_settings=safety_settings,
+			#safety_settings=safety_settings,
 			temperature=modelTemperature,
-			thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
+			#thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
+			#thinking_config=gtypes.ThinkingConfig(
+			#	include_thoughts=True, # Allows you to see the logic in the response
+			#	thinking_budget=thinking    # The numeric budget we discussed
+			#)
 		)
 
 
@@ -484,17 +492,25 @@ def process(job = '',
 	gen_config = None
 	if notools:
 		gen_config = gtypes.GenerateContentConfig(
-			safety_settings=safety_settings,
+			#safety_settings=safety_settings,
 			temperature=modelTemperature,
-			thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
+			#thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
+			#thinking_config=gtypes.ThinkingConfig(
+			#	include_thoughts=True, # Allows you to see the logic in the response
+			#	thinking_budget=thinking    # The numeric budget we discussed
+			#)
 		)
 	else:
 		gen_config = gtypes.GenerateContentConfig(
 			tools=[bq_tool],
 			tool_config=tool_config_any,
-			safety_settings=safety_settings,
+			#safety_settings=safety_settings,
 			temperature=modelTemperature,
-			thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
+			#thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
+			#thinking_config=gtypes.ThinkingConfig(
+			#	include_thoughts=True, # Allows you to see the logic in the response
+			#	thinking_budget=thinking    # The numeric budget we discussed
+			#)
 		)
 
 	resp = completed_job.dest.inlined_responses[0].response
