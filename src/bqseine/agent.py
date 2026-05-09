@@ -353,15 +353,11 @@ def chat(user_data: list[str],
 			thinking = 1024,
 			sysprompt = '',
 			noTools = False,
-			apiKey = '',
-			GCPproject = '',
-			GCPlocation = '') -> gtypes.GenerateContentResponse:
+			apiKey = '') -> gtypes.GenerateContentResponse:
 
 	if len(apiKey) > 0:
 		gclient = genai.Client(
-			api_key=apiKey,
-			project=GCPproject,
-			location=GCPlocation
+			api_key=apiKey
 		)
 
 	global SYSTEM_PROMPT
