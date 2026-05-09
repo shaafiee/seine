@@ -4,6 +4,7 @@ import os
 import json
 from typing import Dict, Any, List, Optional
 
+from google.api_core import exceptions
 from google import genai
 from google.genai import types as gtypes
 from google.cloud import bigquery
@@ -429,12 +430,23 @@ def chat(user_data: list[str],
 	)
 	"""
 
-	# First call: model may respond with text + function_call parts
-	resp = gclient.models.generate_content(
-		model=model,
-		contents=history,
-		config=gen_config
-	)
+	resp = None
+	try:
+		# First call: model may respond with text + function_call parts
+		resp = gclient.models.generate_content(
+			model=model,
+			contents=history,
+			config=gen_config
+		)
+	except exceptions.ResourceExhausted as e:
+		print(f"Status Code: {e.code}")
+		# This is the "Golden" info:
+		if hasattr(e, 'errors') and e.errors:
+			for error in e.errors:
+				meta = error.get('metadata', {})
+				print(f"Dimension: {meta.get('quota_dimension')}") # RPM, TPM, or IPM?
+				print(f"Limit: {meta.get('quota_limit')}")
+				print(f"Current Usage: {meta.get('quota_usage')}")
 
 	# Collect any tool calls from parts
 	tool_calls = []
