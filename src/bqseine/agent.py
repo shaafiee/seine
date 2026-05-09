@@ -352,7 +352,17 @@ def chat(user_data: list[str],
 			model: str = "gemini-2.5-pro",
 			thinking = 1024,
 			sysprompt = '',
-			noTools = False) -> gtypes.GenerateContentResponse:
+			noTools = False,
+			apiKey = '',
+			GCPproject = '',
+			GCPlocation = '') -> gtypes.GenerateContentResponse:
+
+	if len(apiKey) > 0:
+		gclient = genai.Client(
+			api_key=apiKey,
+			project=GCPproject,
+			location=GCPlocation
+		)
 
 	global SYSTEM_PROMPT
 	if len(sysprompt) > 1:
