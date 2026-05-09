@@ -4,10 +4,10 @@ import os
 import json
 from typing import Dict, Any, List, Optional
 
-from google.api_core import exceptions
 from google import genai
 from google.genai import types as gtypes
 from google.cloud import bigquery
+from google.genai import errors
 
 #from context import sales, stocr, traffic
 
@@ -438,21 +438,23 @@ def chat(user_data: list[str],
 			contents=history,
 			config=gen_config
 		)
-	except exceptions.ResourceExhausted as e:
-		print(f"Status Code: {e.code}")
-		# This is the "Golden" info:
-		if hasattr(e, 'errors') and e.errors:
-			for error in e.errors:
-				meta = error.get('metadata', {})
-				print(f"Dimension: {meta.get('quota_dimension')}") # RPM, TPM, or IPM?
-				print(f"Limit: {meta.get('quota_limit')}")
-				print(f"Current Usage: {meta.get('quota_usage')}")
-
-	# Collect any tool calls from parts
-	tool_calls = []
-	for part in resp.candidates[0].content.parts:
-		if part.function_call:
-			tool_calls.append(part.function_call)
+	except errors.ClientError as e:
+		print(f"Caught ClientError: {e}")
+		# This often contains the 'reason' string from Google's backend
+		if hasattr(e, 'details'):
+			print(f"Details: {e.details}")
+		
+		# Check if it's a 429 specifically
+		if "429" in str(e):
+			print("Confirmed: 429 Resource Exhausted.")
+	except Exception as e:
+		print(f"Unexpected error type: {type(e).__name__} - {e}")
+	
+		# Collect any tool calls from parts
+		tool_calls = []
+		for part in resp.candidates[0].content.parts:
+			if part.function_call:
+				tool_calls.append(part.function_call)
 
 	if not tool_calls:
 		# No tools requested → just return; caller can use resp.text safely
