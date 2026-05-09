@@ -380,7 +380,7 @@ def chat(user_data: list[str],
 		gen_config = gtypes.GenerateContentConfig(
 			safety_settings=safety_settings,
 			temperature=modelTemperature,
-			thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
+			#thinking_config=gtypes.ThinkingConfig(thinking_budget=thinking) 
 		)
 	else:
 		gen_config = gtypes.GenerateContentConfig(
