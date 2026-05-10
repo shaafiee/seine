@@ -450,11 +450,11 @@ def chat(user_data: list[str],
 	except Exception as e:
 		print(f"Unexpected error type: {type(e).__name__} - {e}")
 	
-		# Collect any tool calls from parts
-		tool_calls = []
-		for part in resp.candidates[0].content.parts:
-			if part.function_call:
-				tool_calls.append(part.function_call)
+	# Collect any tool calls from parts
+	tool_calls = []
+	for part in resp.candidates[0].content.parts:
+		if part.function_call:
+			tool_calls.append(part.function_call)
 
 	if not tool_calls:
 		# No tools requested → just return; caller can use resp.text safely
