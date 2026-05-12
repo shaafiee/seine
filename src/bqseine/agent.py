@@ -447,8 +447,10 @@ def chat(user_data: list[str],
 		# Check if it's a 429 specifically
 		if "429" in str(e):
 			print("Confirmed: 429 Resource Exhausted.")
+		return None, f"Caught ClientError: {e}"
 	except Exception as e:
 		print(f"Unexpected error type: {type(e).__name__} - {e}")
+		return None, f"Unexpected error type: {type(e).__name__} - {e}"
 	
 	# Collect any tool calls from parts
 	tool_calls = []
