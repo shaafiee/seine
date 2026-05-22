@@ -464,7 +464,7 @@ def chat(user_data: list[str],
 
 	# Execute each requested tool
 
-	final_response = None
+	final_resp = None
 
 	while tool_calls:
 		tool_response_contents: list[gtypes.Content] = []
