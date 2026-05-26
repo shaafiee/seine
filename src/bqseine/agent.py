@@ -21,16 +21,17 @@ import base64
 import numpy as np
 
 # --- BigQuery setup (ADC: env, WI, or SA on the host) ---
-bq = bigquery.Client()
+#bq = bigquery.Client()
 
 # --- Gemini (AI Studio) ---
 # Uses GOOGLE_API_KEY if set, otherwise falls back to application-default creds when supported.
-gclient = genai.Client()
+#gclient = genai.Client()
 
 # ---------- Tool implementations ----------
 
 def json_safe(obj):
 	"""Recursively convert BigQuery / Python types to JSON-serializable types."""
+	bq = bigquery.Client()
 	if isinstance(obj, Decimal):
 		# choose float or str depending on how precise you need
 		return float(obj)
@@ -45,21 +46,25 @@ def json_safe(obj):
 
 def list_datasets(project_id: Optional[str] = None) -> List[str]:
 	"""List accessible BigQuery datasets in a project (defaults to client's project)."""
+	bq = bigquery.Client()
 	proj = project_id or bq.project
 	return [d.dataset_id for d in bq.list_datasets(project=proj)]
 
 def list_tables(dataset: str, project_id: Optional[str] = None) -> List[str]:
 	"""List tables in a dataset."""
+	bq = bigquery.Client()
 	proj = project_id or bq.project
 	return [t.table_id for t in bq.list_tables(f"{proj}.{dataset}")]
 
 def get_table_schema(table: str, dataset: str, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
 	"""Return table schema (name, type, mode) as JSON."""
+	bq = bigquery.Client()
 	proj = project_id or bq.project
 	t = bq.get_table(f"{proj}.{dataset}.{table}")
 	return [{"name": f.name, "type": f.field_type, "mode": f.mode} for f in t.schema]
 
 def run_query(sql: str, params: Optional[Dict[str, Any]] = None, dry_run: bool = False) -> Dict[str, Any]:
+	bq = bigquery.Client()
 	lowered = sql.strip().lower()
 	if lowered.startswith(("insert", "update", "delete", "merge", "create", "drop", "alter")):
 		return {
@@ -356,11 +361,14 @@ def chat(user_data: list[str],
 			noTools = False,
 			apiKey = '') -> gtypes.GenerateContentResponse:
 
+	gclient = None
 	if len(apiKey) > 0:
 		gclient = genai.Client(
 			api_key=apiKey,
 			http_options={'api_version': 'v1beta'}
 		)
+	else:
+		gclient = genai.Client()
 
 	global SYSTEM_PROMPT
 	if len(sysprompt) > 1:
