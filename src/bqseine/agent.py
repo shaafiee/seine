@@ -452,6 +452,7 @@ def chat(user_data: list[str],
 			contents=history,
 			config=gen_config
 		)
+		history.append(resp.candidates[0].content)
 	except errors.ClientError as e:
 		print(f"Caught ClientError: {e}")
 		# This often contains the 'reason' string from Google's backend
@@ -484,7 +485,6 @@ def chat(user_data: list[str],
 		tool_response_contents: list[gtypes.Content] = []
 		for fc in tool_calls:
 			result = dispatch_tool(fc.name, dict(fc.args))
-	
 			if fc.name == "render_complex_chart":
 				sanitized_result = json_safe(result)
 				if "image_base64" in sanitized_result:
@@ -506,27 +506,27 @@ def chat(user_data: list[str],
 							],
 						)
 					)
-					history.append(resp.candidates[0].content)
+					#history.append(resp.candidates[0].content)
 					history.extend(tool_response_contents)
-					return [sanitized_result, history]
-	
-			tool_response_contents.append(
-				gtypes.Content(
-					role="tool",
-					parts=[
-						gtypes.Part(
-							function_response=gtypes.FunctionResponse(
-								name=fc.name,
-								response=result,
-								id=fc.id
+					#return [sanitized_result, history]
+			else:	
+				tool_response_contents.append(
+					gtypes.Content(
+						role="tool",
+						parts=[
+							gtypes.Part(
+								function_response=gtypes.FunctionResponse(
+									name=fc.name,
+									response=result,
+									id=fc.id
+								)
 							)
-						)
-					],
+						],
+					)
 				)
-			)
-
+	
 		# Extend history with the model's function_call turn + tool responses
-		history.append(resp.candidates[0].content)
+		#history.append(resp.candidates[0].content)
 		history.extend(tool_response_contents)
 
 		final_resp = gclient.models.generate_content(
@@ -534,6 +534,7 @@ def chat(user_data: list[str],
 			contents=history,
 			config=gen_config,
 		)
+		history.append(resp.candidates[0].content)
 
 		tool_calls = []
 		for part in final_resp.candidates[0].content.parts:
