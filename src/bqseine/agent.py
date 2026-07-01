@@ -409,8 +409,8 @@ def chat(user_data: list[str],
 
 	user_prompt = user_data[0]
 	additional_instructions = user_data[1]
-	if not isinstance(history, list):
-		history = []
+	#if not isinstance(history, list):
+	#	history = []
 
 	if not history:
 		history.append(
@@ -420,7 +420,13 @@ def chat(user_data: list[str],
 			)
 		)
 
-		# Add the new user message
+		history.append(
+			gtypes.Content(
+				role="user",
+				parts=[gtypes.Part(text=user_prompt)]
+			)
+		)
+	else:
 		history.append(
 			gtypes.Content(
 				role="user",
