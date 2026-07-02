@@ -507,7 +507,7 @@ def chat(user_data: list[str],
 						)
 					)
 					#history.append(resp.candidates[0].content)
-					history.extend(tool_response_contents)
+					#history.extend(tool_response_contents)
 					#return [sanitized_result, history]
 			else:	
 				tool_response_contents.append(
@@ -527,7 +527,7 @@ def chat(user_data: list[str],
 	
 		# Extend history with the model's function_call turn + tool responses
 		#history.append(resp.candidates[0].content)
-		history.extend(tool_response_contents)
+		#history.extend(tool_response_contents)
 
 		final_resp = gclient.models.generate_content(
 			model=model,
